@@ -31,7 +31,7 @@ Assistente RAG sobre a base de conhecimento do **YAITEC Atende**, construído co
 
 ## Ferramentas de IA utilizadas
 
-- **Windsurf (Cascade)** — geração e revisão de código
+- **Windsurf (Cascade)** — revisão de código
 - **OpenAI GPT-4o-mini** — LLM de resposta em produção
 - **OpenAI text-embedding-3-small** — embeddings para o índice RAG
 
