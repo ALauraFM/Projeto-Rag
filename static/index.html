@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YAITEC Atende — Assistente RAG</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text y='.9em' font-size='60' x='50%' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='white'>YA</text></svg>" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --user-bubble: #6366f1;
+      --bot-bubble: #1e2235;
+      --source-bg: #12151f;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      max-width: 720px;
+      padding: 20px 24px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: #fff;
+      flex-shrink: 0;
+    }
+
+    header h1 { font-size: 17px; font-weight: 600; }
+    header p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    #new-chat-btn {
+      margin-left: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color .2s, color .2s;
+    }
+
+    #new-chat-btn:hover { border-color: var(--accent); color: var(--text); }
+    #new-chat-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    #chat {
+      flex: 1;
+      width: 100%;
+      max-width: 720px;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+    }
+
+    .message.user  { align-self: flex-end; align-items: flex-end; }
+    .message.bot   { align-self: flex-start; align-items: flex-start; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.user .bubble {
+      background: var(--user-bubble);
+      color: #fff;
+      border-bottom-right-radius: 3px;
+    }
+
+    .message.bot .bubble {
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 3px;
+    }
+
+    .sources {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .source-tag {
+      font-size: 11px;
+      background: var(--source-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 3px 8px;
+    }
+
+    .typing {
+      display: flex; align-items: center; gap: 5px;
+      padding: 14px 16px;
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-bottom-left-radius: 3px;
+    }
+
+    .typing span {
+      width: 7px; height: 7px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: blink 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: .2; transform: scale(.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    form {
+      width: 100%;
+      max-width: 720px;
+      padding: 12px 16px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      min-height: 48px;
+      max-height: 160px;
+      overflow-y: auto;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--text-muted); }
+
+    button[type="submit"] {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+
+    button[type="submit"]:hover { background: var(--accent-hover); }
+    button[type="submit"]:disabled { opacity: .5; cursor: not-allowed; }
+
+    #mic-btn {
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+
+    #mic-btn:hover { border-color: var(--accent); color: var(--text); }
+    #mic-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    #mic-btn.recording {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, .5); }
+      50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    }
+
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state h2 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .empty-state p  { font-size: 13px; line-height: 1.6; }
+
+    .suggestions {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 8px; margin-top: 16px;
+    }
+
+    .suggestion {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+
+    .suggestion:hover { border-color: var(--accent); color: var(--text); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">YA</div>
+  <div>
+    <h1>YAITEC Atende</h1>
+    <p>Assistente RAG · Base de conhecimento interna</p>
+  </div>
+  <button id="new-chat-btn" onclick="resetChat()" aria-label="Voltar à tela inicial">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+    Início
+  </button>
+</header>
+
+<div id="chat">
+  <div class="empty-state" id="empty-state">
+    <div class="icon">💬</div>
+    <h2>Como posso ajudar?</h2>
+    <p>Faça perguntas sobre planos, integrações ou funcionalidades do YAITEC Atende.</p>
+    <div class="suggestions">
+      <button class="suggestion" onclick="fillAndSend(this)">Quais são os planos disponíveis?</button>
+      <button class="suggestion" onclick="fillAndSend(this)">Qual o SLA do plano Enterprise?</button>
+      <button class="suggestion" onclick="fillAndSend(this)">Quais canais são suportados?</button>
+      <button class="suggestion" onclick="fillAndSend(this)">Tem teste gratuito?</button>
+    </div>
+  </div>
+</div>
+
+<form id="form" onsubmit="sendMessage(event)">
+  <textarea
+    id="input"
+    placeholder="Digite sua pergunta..."
+    rows="1"
+    onkeydown="handleKey(event)"
+    oninput="autoResize(this)"
+  ></textarea>
+  <button type="button" id="mic-btn" aria-label="Gravar áudio" onclick="toggleRecording()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+      <line x1="8" y1="23" x2="16" y2="23"></line>
+    </svg>
+  </button>
+  <button type="submit" id="send-btn" aria-label="Enviar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="22" y1="2" x2="11" y2="13"></line>
+      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+    </svg>
+  </button>
+</form>
+
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send-btn');
+  const newChatBtn = document.getElementById('new-chat-btn');
+  let emptyState = document.getElementById('empty-state');
+  const emptyStateHTML = emptyState.outerHTML;
+  let loading = false;
+
+  function resetChat() {
+    if (loading) return;
+    chat.innerHTML = emptyStateHTML;
+    emptyState = document.getElementById('empty-state');
+    input.value = '';
+    input.style.height = 'auto';
+    input.focus();
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(e);
+    }
+  }
+
+  function fillAndSend(btn) {
+    input.value = btn.textContent;
+    autoResize(input);
+    input.focus();
+    sendMessage({ preventDefault: () => {} });
+  }
+
+  function appendMessage(role, text, sources, audioBase64) {
+    if (emptyState) emptyState.remove();
+
+    const msg = document.createElement('div');
+    msg.className = `message ${role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    msg.appendChild(bubble);
+
+    if (sources && sources.length) {
+      const sourcesDiv = document.createElement('div');
+      sourcesDiv.className = 'sources';
+      sources.forEach(s => {
+        const tag = document.createElement('span');
+        tag.className = 'source-tag';
+        tag.textContent = '📄 ' + s;
+        sourcesDiv.appendChild(tag);
+      });
+      msg.appendChild(sourcesDiv);
+    }
+
+    if (audioBase64) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = 'data:audio/mp3;base64,' + audioBase64;
+      audio.style.marginTop = '8px';
+      audio.style.maxWidth = '260px';
+      msg.appendChild(audio);
+      audio.play().catch(() => {});
+    }
+
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+    return msg;
+  }
+
+  function showTyping() {
+    if (emptyState) emptyState.remove();
+    const msg = document.createElement('div');
+    msg.className = 'message bot';
+    msg.id = 'typing-indicator';
+    msg.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  async function sendMessage(e) {
+    e.preventDefault();
+    const pergunta = input.value.trim();
+    if (!pergunta || loading) return;
+
+    loading = true;
+    sendBtn.disabled = true;
+    newChatBtn.disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+
+    appendMessage('user', pergunta);
+    showTyping();
+
+    try {
+      const res = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pergunta }),
+      });
+
+      removeTyping();
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        appendMessage('bot', '⚠️ Erro: ' + (err.detail || res.statusText));
+      } else {
+        const data = await res.json();
+        appendMessage('bot', data.resposta, data.fontes);
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage('bot', '⚠️ Não foi possível conectar ao servidor. Tente novamente.');
+    } finally {
+      loading = false;
+      sendBtn.disabled = false;
+      newChatBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  // ---- Voice (STT/TTS) ----
+  const micBtn = document.getElementById('mic-btn');
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recording = false;
+
+  async function toggleRecording() {
+    if (loading) return;
+    if (recording) {
+      mediaRecorder.stop();
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      appendMessage('bot', '⚠️ Seu navegador não suporta gravação de áudio.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        sendAudio(blob);
+      };
+
+      mediaRecorder.start();
+      recording = true;
+      micBtn.classList.add('recording');
+    } catch (err) {
+      appendMessage('bot', '⚠️ Permissão de microfone negada ou indisponível.');
+    }
+  }
+
+  async function sendAudio(blob) {
+    recording = false;
+    micBtn.classList.remove('recording');
+    loading = true;
+    sendBtn.disabled = true;
+    micBtn.disabled = true;
+    newChatBtn.disabled = true;
+
+    appendMessage('user', '🎤 (mensagem de voz)');
+    showTyping();
+
+    try {
+      const formData = new FormData();
+      formData.append('file', blob, 'audio.webm');
+
+      const res = await fetch('/ask-audio', { method: 'POST', body: formData });
+      removeTyping();
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        appendMessage('bot', '⚠️ Erro: ' + (err.detail || res.statusText));
+      } else {
+        const data = await res.json();
+        const lastUser = chat.querySelector('.message.user:last-of-type .bubble');
+        if (lastUser) lastUser.textContent = '🎤 ' + data.pergunta;
+        appendMessage('bot', data.resposta, data.fontes, data.audio_base64);
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage('bot', '⚠️ Não foi possível processar o áudio. Tente novamente.');
+    } finally {
+      loading = false;
+      sendBtn.disabled = false;
+      micBtn.disabled = false;
+      newChatBtn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
