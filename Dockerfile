@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python -m app.ingest && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "python -m app.ingestion_pipeline && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

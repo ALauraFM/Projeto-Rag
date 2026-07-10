@@ -4,16 +4,40 @@ Uses QdrantVectorStore.add_documents so payloads are stored in LangChain's expec
 Idempotent: skips if the collection already has points.
 """
 import logging
+import os
 import sys
 
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 
 from app.config import settings
-from app.rag import get_embeddings, load_and_split_docs
+from app.retrieval_pipeline import get_embeddings
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def load_and_split_docs():
+    loader = DirectoryLoader(
+        settings.docs_path,
+        glob="**/*.md",
+        loader_cls=TextLoader,
+        loader_kwargs={"encoding": "utf-8"},
+    )
+    raw_docs = loader.load()
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
+    )
+    chunks = splitter.split_documents(raw_docs)
+
+    for chunk in chunks:
+        chunk.metadata["source"] = os.path.basename(chunk.metadata.get("source", ""))
+
+    return chunks
 
 
 def ingest() -> None:

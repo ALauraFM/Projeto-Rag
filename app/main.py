@@ -7,7 +7,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.config import settings
-from app.rag import build_rag_chain, get_vector_store
+from app.rag import build_rag_chain
+from app.retrieval_pipeline import get_vector_store
 from app.voice import transcribe, synthesize
 
 _rag_chain = None

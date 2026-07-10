@@ -22,7 +22,7 @@ def client():
 
     fake_chain = MagicMock(return_value=fake_chain_result)
 
-    with patch("app.rag.get_vector_store", return_value=MagicMock()), \
+    with patch("app.retrieval_pipeline.get_vector_store", return_value=MagicMock()), \
          patch("app.rag.build_rag_chain", return_value=fake_chain), \
          patch("app.main._rag_chain", fake_chain):
         from app.main import app

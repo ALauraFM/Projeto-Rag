@@ -140,8 +140,9 @@ yaitec_desafio/
 ├── docs/                        # Base de conhecimento (3 arquivos .md)
 ├── app/
 │   ├── config.py                # Configurações via pydantic-settings
-│   ├── rag.py                   # Pipeline RAG (chunking, embedding, retrieval, prompt)
-│   ├── ingest.py                # Ingestão dos documentos no Qdrant
+│   ├── retrieval_pipeline.py    # Embeddings, Qdrant e recuperação de contexto
+│   ├── rag.py                   # Geração: prompt + LLM + composição da chain (LCEL)
+│   ├── ingestion_pipeline.py    # Carregamento, chunking e ingestão no Qdrant
 │   ├── voice.py                 # STT (Whisper) e TTS via OpenAI
 │   └── main.py                  # FastAPI: /ask, /ask-audio, health, static
 ├── static/
