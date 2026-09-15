@@ -1,4 +1,4 @@
-# YAITEC RAG Assistant
+#RAG Assistant
 
 Assistente RAG sobre a base de conhecimento do **YAITEC Atende**, construído com Python + FastAPI + LangChain + Qdrant + OpenAI.
 
